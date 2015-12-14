@@ -1,0 +1,169 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "KeyName": {
+      "Description": "SSH public key to install on the cluster.",
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+    "OurVpcId": {
+      "Description": "The VPC ID. This should refer to a VPC that already has an IGW and a default route.",
+      "Type": "AWS::EC2::VPC::Id",
+      "Default": "vpc-8d6050e8"
+    },
+    "AvailabilityZone": {
+      "Description": "The availability zone. Must match the AZ of the subnet specified in SubnetId.",
+      "Type": "AWS::EC2::AvailabilityZone::Name",
+      "Default": "us-west-2a"
+    },
+    "SubnetId": {
+      "Type": "AWS::EC2::Subnet::Id",
+      "Default": "subnet-38c79f4f",
+      "Description": "The subnet (with auto-assign public IPs enabled) to place this machine in."
+    },
+    "WebserverInstanceType": {
+      "Description": "The machine type of the frontend instance.",
+      "Type": "String",
+      "Default": "m3.medium"
+    },
+    "HostedZoneId": {
+      "Description": "The ID of the Route53-hosted zone to create a DNS entry in.",
+      "Type": "AWS::Route53::HostedZone::Id",
+      "Default": "ZT0EVLJFYY46W"
+    },
+    "HostedZoneName": {
+      "Description": "The name of the Route53-hosted zone to create a DNS entry in. This must match the zone name corresponding to HostedZoneId, and is used to define the hostname that will be created. Example: 'examples.domain.com' would result in a hostname of 'frontend.STACKNAME.examples.domain.com'.",
+      "Type": "String",
+      "MinLength": 4
+    }
+  },
+  "Resources": {
+    "WebserverIPAddress": {
+      "Type": "AWS::EC2::EIP",
+      "Properties": {
+        "InstanceId": {
+          "Ref": "WebserverInstance"
+        },
+        "Domain": "vpc"
+      }
+    },
+    "WebserverSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": {
+          "Ref": "OurVpcId"
+        },
+        "GroupDescription": "Allows the world to access port 80 and 22.",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "CidrIp": "0.0.0.0/0",
+            "FromPort": "80",
+            "ToPort": "80"
+          },
+          {
+            "IpProtocol": "tcp",
+            "CidrIp": "0.0.0.0/0",
+            "FromPort": "22",
+            "ToPort": "22"
+          }
+        ]
+      }
+    },
+    "WebserverInstance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "AvailabilityZone": {
+          "Ref": "AvailabilityZone"
+        },
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash -xe\n",
+                "# This user-data script is run immediately on first boot of the machine.\n",
+                "\n"
+              ]
+            ]
+          }
+        },
+        "InstanceType": {
+          "Ref": "WebserverInstanceType"
+        },
+        "ImageId": "ami-5189a661",
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "NetworkInterfaces": [
+          {
+            "AssociatePublicIpAddress": true,
+            "DeviceIndex": "0",
+            "GroupSet": [
+              {
+                "Ref": "WebserverSecurityGroup"
+              }
+            ],
+            "SubnetId": {
+              "Ref": "SubnetId"
+            }
+          }
+        ]
+      }
+    },
+    "WebserverHostRecord": {
+      "Type": "AWS::Route53::RecordSet",
+      "Properties": {
+        "HostedZoneId": {
+          "Ref": "HostedZoneId"
+        },
+        "Comment": "Public DNS name for frontend instance.",
+        "Name": {
+          "Fn::Join": [
+            "",
+            [
+              "frontend.",
+              {
+                "Ref": "AWS::StackName"
+              },
+              ".",
+              {
+                "Ref": "HostedZoneName"
+              },
+              "."
+            ]
+          ]
+        },
+        "Type": "A",
+        "TTL": "120",
+        "ResourceRecords": [
+          {
+            "Ref": "WebserverIPAddress"
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "WebserverInstanceIp": {
+      "Description": "Webserver Private IP",
+      "Value": {
+        "Fn::GetAtt": [
+          "WebserverInstance",
+          "PrivateIp"
+        ]
+      }
+    },
+    "WebserverEIP": {
+      "Description": "Webserver Public IP",
+      "Value": {
+        "Ref": "WebserverIPAddress"
+      }
+    },
+    "WebserverPublicHostname": {
+      "Description": "Webserver Public Hostname",
+      "Value": {
+        "Ref": "WebserverHostRecord"
+      }
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {
+    "OurVpcId": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": "172.31.66.0/24",
+        "EnableDnsSupport": "true",
+        "EnableDnsHostnames": "true",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "Edu"
+          }
+        ]
+      }
+    },
+    "OurDhcpOptions": {
+      "Type": "AWS::EC2::DHCPOptions",
+      "Properties": {
+        "DomainNameServers": [
+          "AmazonProvidedDNS"
+        ]
+      }
+    },
+    "OurVpcDhcpOptionsAssociation": {
+      "Type": "AWS::EC2::VPCDHCPOptionsAssociation",
+      "Properties": {
+        "VpcId": {
+          "Ref": "OurVpcId"
+        },
+        "DhcpOptionsId": {
+          "Ref": "OurDhcpOptions"
+        }
+      }
+    },
+    "VpcInternetGateway": {
+      "Type": "AWS::EC2::InternetGateway"
+    },
+    "VpcInternetGatewayToOurVpcAttachment": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": {
+          "Ref": "OurVpcId"
+        },
+        "InternetGatewayId": {
+          "Ref": "VpcInternetGateway"
+        }
+      }
+    },
+    "PublicSubnet": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "AvailabilityZone": "us-west-2a",
+        "VpcId": {
+          "Ref": "OurVpcId"
+        },
+        "CidrBlock": "172.31.66.0/25",
+        "MapPublicIpOnLaunch": true
+      }
+    },
+    "PublicSubnetRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "OurVpcId"
+        }
+      }
+    },
+    "PublicSubnetRouteTableAssociation": {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "RouteTableId" : {"Ref": "PublicSubnetRouteTable"},
+        "SubnetId" : {"Ref": "PublicSubnet"}
+       }
+    },
+    "PublicSubnetDefaultRouteToInternetGatewayRoute": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": "VpcInternetGateway",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "PublicSubnetRouteTable"
+        },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcInternetGateway"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "VpcId": {
+      "Description": "VPC ID",
+      "Value": {
+        "Ref": "OurVpcId"
+      }
+    },
+    "PublicSubnetRouteTable": {
+      "Description": "Route Table for hosts that get internet access",
+      "Value": {
+        "Ref": "PublicSubnetRouteTable"
+      }
+    },
+    "Subnet": {
+      "Description": "Public Subnet",
+      "Value": {
+        "Ref": "PublicSubnet"
+      }
+    }
+  }
+}

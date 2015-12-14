@@ -1,0 +1,155 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "AdministratorPrincipal": {
+      "Type": "String",
+      "Default": "user/datadog"
+    },
+    "UserPrincipal": {
+      "Type": "String",
+      "Default": "user/datadog"
+    }
+  },
+  "Resources": {
+    "DemonstrationKey": {
+      "Type": "AWS::KMS::Key",
+      "Properties": {
+        "KeyPolicy": {
+          "Id": "key-consolepolicy-2",
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "Enable IAM User Permissions",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": [
+                  {
+                    "Fn::Join": [
+                      ":",
+                      [
+                        "arn:aws:iam:",
+                        {
+                          "Ref": "AWS::AccountId"
+                        }, 
+                        "root"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "Action": "kms:*",
+              "Resource": "*"
+            },
+            {
+              "Sid": "Allow access for Key Administrators",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": [
+                  {
+                    "Fn::Join": [
+                      ":",
+                      [
+                        "arn:aws:iam:",
+                        {
+                          "Ref": "AWS::AccountId"
+                        },
+                        {
+                          "Ref": "AdministratorPrincipal"
+                        }
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "Action": [
+                "kms:Create*",
+                "kms:Describe*",
+                "kms:Enable*",
+                "kms:List*",
+                "kms:Put*",
+                "kms:Update*",
+                "kms:Revoke*",
+                "kms:Disable*",
+                "kms:Get*",
+                "kms:Delete*",
+                "kms:ScheduleKeyDeletion",
+                "kms:CancelKeyDeletion"
+              ],
+              "Resource": "*"
+            },
+            {
+              "Sid": "Allow use of the key",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": [
+                  {
+                    "Fn::Join": [
+                      ":",
+                      [
+                        "arn:aws:iam:",
+                        {
+                          "Ref": "AWS::AccountId"
+                        },
+                        {
+                          "Ref": "UserPrincipal"
+                        }
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "Action": [
+                "kms:Encrypt",
+                "kms:Decrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:DescribeKey"
+              ]
+            },
+            {
+              "Sid": "Allow attachment of persistent resources",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": [
+                  {
+                    "Fn::Join": [
+                      ":",
+                      [
+                        "arn:aws:iam:",
+                        {
+                          "Ref": "AWS::AccountId"
+                        },
+                        {
+                          "Ref": "UserPrincipal"
+                        }
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "Action": [
+                "kms:CreateGrant",
+                "kms:ListGrants",
+                "kms:RevokeGrant"
+              ],
+              "Resource": "*",
+              "Condition": {
+                "Bool": {
+                  "kms:GrantIsForAWSResource": true
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "KeyID": {
+      "Description": "Key ID",
+      "Value": {
+        "Ref": "DemonstrationKey"
+      }
+    }
+  }
+}

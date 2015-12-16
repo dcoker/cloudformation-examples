@@ -1,5 +1,23 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Creates a KMS key and attaches a policy similar to the default policy. Also, creates two Roles which allow encryption and decryption under this key.",
+  "Metadata": {
+    "BestPracticeNotes": [
+      "EncryptAnythingRole and DecryptAnythingRole will ",
+      "allow the caller to make practical use of the KMS key and allows for ",
+      "separation of responsibilities. For example, a data ingestion server might ",
+      "only be allowed to encrypt whereas a processing node is allowed to decrypt. ",
+      "It is generally better to use KMS Grants for controlling access to ",
+      "operations on the keys, but sometimes these two roles are all you need.",
+      "",
+      "However, often that distinction is not enough, and you'll want to control ",
+      "the ability to encrypt and decrypt even further. KMS allows you to label ",
+      "encrypted payloads and specify constraints on the ability of actors to ",
+      "operate only on specific labels. See KMS docs for Grants and ",
+      "EncryptionContext for more information.",
+      ""
+    ]
+  },
   "Parameters": {
     "AdministratorPrincipal": {
       "Type": "String",
@@ -15,7 +33,7 @@
       "Type": "AWS::KMS::Key",
       "Properties": {
         "KeyPolicy": {
-          "Id": "key-consolepolicy-2",
+          "Id": "DefaultKmsPolicy",
           "Version": "2012-10-17",
           "Statement": [
             {
@@ -30,7 +48,7 @@
                         "arn:aws:iam:",
                         {
                           "Ref": "AWS::AccountId"
-                        }, 
+                        },
                         "root"
                       ]
                     ]
@@ -138,6 +156,91 @@
                   "kms:GrantIsForAWSResource": true
                 }
               }
+            },
+            {
+              "Sid": "Allow decrypting of any value encrypted under this key.",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": [
+                  {
+                    "Fn::GetAtt": [
+                      "DecryptAnythingRole",
+                      "Arn"
+                    ]
+                  }
+                ]
+              },
+              "Action": [
+                "kms:Decrypt"
+              ],
+              "Resource": "*"
+            },
+            {
+              "Sid": "Allow encrypting under this key.",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": [
+                  {
+                    "Fn::GetAtt": [
+                      "EncryptAnythingRole",
+                      "Arn"
+                    ]
+                  }
+                ]
+              },
+              "Action": [
+                "kms:Encrypt",
+                "kms:GenerateDataKey"
+              ],
+              "Resource": "*"
+            }
+          ]
+        }
+      }
+    },
+    "DecryptAnythingRole": {
+      "Type": "AWS::IAM::Role",
+      "Metadata": {
+        "Comment": "DecryptAnythingRole permits decryption of values encrypted under a KMS key without any restrictions."
+      },
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ec2.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "EncryptAnythingRole": {
+      "Type": "AWS::IAM::Role",
+      "Metadata": {
+        "Comment": "EncryptAnythingRole permits encryption of values under a KMS key without any restrictions."
+      },
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ec2.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
             }
           ]
         }

@@ -12,18 +12,19 @@ queues.
 Demo:
 
 1. Install pip, boto3, and awscli system-wide.
-
 2. Set up virtualenv and build the deployment zip:
+  ```
   $ virtualenv venv
   $ . ./venv/bin/activate
   $ pip install -r requirements.txt
   $ ./build.sh
-
+  ```
 3. Push the bundled zip to a bucket readable by Lambda (replacing your-bucket-name):
+  ```
   $ BUCKET=your-bucket-name ./deploy-s3.sh
-
-5. Run the example CloudFormation template, create a queue, and observe the results. Be sure to replace your-bucket-name.
-
+  ```
+4. Run the example CloudFormation template, create a queue, and observe the results. Be sure to replace your-bucket-name.
+  ```
   $ aws cloudformation create-stack \
       --stack-name one-deleter-stack \
       --template-body file://delete-sqs-queues.json \
@@ -37,4 +38,4 @@ Demo:
   $ aws cloudformation delete-stack --stack-name one-deleter-stack 
   ... wait
   $ aws sqs list-queues
-
+  ```

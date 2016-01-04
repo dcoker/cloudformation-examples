@@ -1,5 +1,5 @@
-custom-resource-queue-cleanup
-=============================
+delete-sqs-queues
+=================
 
 Sometimes your CloudFormation stack will dynamically create resources, but
 you'd like to delete those resources when you delete the stack.

@@ -10,7 +10,7 @@ script to use the awscli to decrypt the secret.
 
 In the examples below:
 
-1. replace XXX with the username of the employee you designate as key adminstrator. This person controls who can use the key and for what purposes and how.
+1. replace XXX with the username of the employee you designate as key administrator. This person controls who can use the key and for what purposes and how.
 2. replace YYY with the username of the employee you want to be able to encrypt or decrypt.
 3. replace PPP with a short label for the customer.
 4. replace SSS with your secret

@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-. defaults.sh
+. cf-defaults.sh
 # Your stack may require you to specify --parameters here. See "aws
 # cloudformation create-stack help" for examples. Here's what it might look
 # like:
@@ -12,7 +12,7 @@ set -e
 #   aws ... --parameters ${PARAMETERS[@]}
 aws --region "${REGION}" cloudformation create-stack \
 	--stack-name "${STACK_NAME}" \
-	--template-body ${TEMPLATE_FILE} \
+	--template-body "${TEMPLATE_FILE}" \
 	--capabilities CAPABILITY_IAM 
 echo __ waiting for stack to finish
 sleep "${WAIT_SECONDS}"

@@ -1,3 +1,4 @@
+#!/bin/bash
 TEMPLATE=${TEMPLATE:-"end-to-end/webserver-with-route53-hostname.json"}
 TEMPLATE_FILE=file://./${TEMPLATE}
 STACK_NAME=${STACK_NAME:-"${LOGNAME}-$(date +%s)"}

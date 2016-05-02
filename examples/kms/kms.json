@@ -122,7 +122,8 @@
                 "kms:ReEncrypt*",
                 "kms:GenerateDataKey*",
                 "kms:DescribeKey"
-              ]
+              ],
+              "Resource": "*"
             },
             {
               "Sid": "Allow attachment of persistent resources",
